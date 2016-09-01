@@ -15,7 +15,7 @@ def url_redirect_params(context):
         metric = int(GET.get('metric__id__exact'))
         if Metric.objects.filter(pk=metric).count() == 0:
             raise ValueError("Not metric")
-    except (ValueError, AssertionError):
+    except (ValueError, AssertionError, TypeError):
         # If there's no metic selected, there's no need to look for the dates
         return ''
 
