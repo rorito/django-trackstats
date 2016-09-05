@@ -110,8 +110,36 @@ class ObjectsByDateTracker(object):
                     date=val['ts_date'],
                     period=self.period,
                     **self.get_record_kwargs(val))
+
+        elif self.period == Period.MONTH:
+            # from django.db import connection
+            # from django.db.models import Sum, Count
+
+            connection = connections[qs.db]
+            truncate_date = connection.ops.date_trunc_sql('month', self.date_field)
+
+            qs = qs.extra({'ts_date': truncate_date})
+
+            vals = qs.values('ts_date').annotate(
+                ts_n=models.Count('pk')
+            ).order_by('ts_date')
+
+            for val in vals:
+                self.statistic_model.objects.record(
+                    metric=self.metric,
+                    value=val['ts_n'],
+                    date=val['ts_date'],
+                    period=self.period,
+                    **self.get_record_kwargs(val)
+                )
+
+        elif self.period == Period.WEEK:
+            #import ipdb; ipdb.set_trace()
+            pass
         else:
-            raise NotImplementedError
+            return
+            print self.period
+            #raise NotImplementedError
 
 
 class ObjectsByDateAndObjectTracker(ObjectsByDateTracker):
