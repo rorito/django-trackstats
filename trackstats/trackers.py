@@ -112,8 +112,6 @@ class ObjectsByDateTracker(object):
                     **self.get_record_kwargs(val))
 
         elif self.period == Period.MONTH:
-            # from django.db import connection
-            # from django.db.models import Sum, Count
 
             connection = connections[qs.db]
             truncate_date = connection.ops.date_trunc_sql('month', self.date_field)
@@ -134,12 +132,36 @@ class ObjectsByDateTracker(object):
                 )
 
         elif self.period == Period.WEEK:
-            #import ipdb; ipdb.set_trace()
-            pass
+            # TODO: Revamp this code when Django 1.10 is released
+            # NOTE: Use Expression and Func
+            # NOTE: If the first week of the year starts a thursday, weeks will be counted
+            #       by thursday
+            # NOTE: This only works on **PostgreSQL**, see TODO above
+
+            vals = qs.extra(
+                select={
+                    'ts_date':
+                        "to_date("
+                        "date_part('year',created_date)"
+                        "||'-'||"
+                        "date_part('week',created_date), "
+                        "'yyyy-ww')"
+                }
+            ).values('ts_date').annotate(
+                ts_n=models.Count('pk')
+            ).order_by('ts_date')
+
+            for val in vals:
+                self.statistic_model.objects.record(
+                    metric=self.metric,
+                    value=val['ts_n'],
+                    date=val['ts_date'],
+                    period=self.period,
+                    **self.get_record_kwargs(val)
+                )
+
         else:
-            return
-            print self.period
-            #raise NotImplementedError
+            raise NotImplementedError
 
 
 class ObjectsByDateAndObjectTracker(ObjectsByDateTracker):
