@@ -50,6 +50,9 @@ Period
   store incremental values on a daily basis (`Period.DAY`), or keep
   track of a rolling count for the last 7 days (`Period.WEEK`).
 
+  Note: In our fork, Period.WEEK only works on Postgres, should be
+  easier to implement for all databases in Django 1.10
+
 Reference IDs
   Domains and metrics must be assigned unique reference IDs (of type
   string). Rationale: Having a human readable, non PK based, reference
