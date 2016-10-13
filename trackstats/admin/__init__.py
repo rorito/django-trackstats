@@ -6,6 +6,7 @@ from django.template.response import TemplateResponse
 from trackstats.models import (
     Domain,
     Metric,
+    Period,
     StatisticByDate,
     StatisticByDateAndObject)
 from trackstats.admin.forms import (
@@ -87,11 +88,20 @@ class StatisticByDateAdmin(StatisticGraphMixin, admin.ModelAdmin):
         'value'
     )
     date_hierarchy = 'date'
+
     list_filter = (
         'date',
         'period',
         'metric__domain',
         'metric')
+
+    def changelist_view(self, request, extra_context=None):
+        if not request.GET.has_key('period__exact'):
+            q = request.GET.copy()
+            q['period__exact'] = str(Period.DAY)
+            request.GET = q
+            request.META['QUERY_STRING'] = request.GET.urlencode()
+        return super(StatisticByDateAdmin, self).changelist_view(request, extra_context=extra_context)
 
 
 @admin.register(StatisticByDateAndObject)
@@ -110,11 +120,21 @@ class StatisticByDateAndObjectAdmin(StatisticGraphMixin, admin.ModelAdmin):
         'value'
     )
     date_hierarchy = 'date'
+
     list_filter = (
         'date',
         'period',
         'metric__domain',
         'metric')
+
+
+    def changelist_view(self, request, extra_context=None):
+        if not request.GET.has_key('period__exact'):
+            q = request.GET.copy()
+            q['period__exact'] = str(Period.DAY)
+            request.GET = q
+            request.META['QUERY_STRING'] = request.GET.urlencode()
+        return super(StatisticByDateAndObjectAdmin, self).changelist_view(request, extra_context=extra_context)
 
 #            stat = StatisticByDate.objects.last()
 #            initial = {}

@@ -8,6 +8,8 @@ from django.utils import timezone
 
 from .models import Period, StatisticByDate, StatisticByDateAndObject
 
+import logging
+logger = logging.getLogger(__name__)
 
 class ObjectsByDateTracker(object):
     date_field = 'date'
@@ -74,6 +76,7 @@ class ObjectsByDateTracker(object):
             while upto_date <= to_date:
                 self.track_lifetime_upto(qs, upto_date)
                 upto_date += timedelta(days=1)
+                logger.info("trackers - lifetime - {}".format(qs))
         elif self.period == Period.DAY:
             values_fields = ['ts_date'] + self.get_track_values()
             connection = connections[qs.db]
@@ -103,6 +106,7 @@ class ObjectsByDateTracker(object):
                 **{self.date_field + '__gte': start_dt}).values(
                 *values_fields).order_by().annotate(ts_n=self.aggr_op)
             # TODO: Bulk create
+            logger.info("trackers - day - {}".format(vals.query))
             for val in vals:
                 self.statistic_model.objects.record(
                     metric=self.metric,
@@ -121,6 +125,8 @@ class ObjectsByDateTracker(object):
             vals = qs.values('ts_date').annotate(
                 ts_n=models.Count('pk')
             ).order_by('ts_date')
+
+            logger.info("trackers - month - {}".format(vals.query))
 
             for val in vals:
                 self.statistic_model.objects.record(
@@ -150,6 +156,8 @@ class ObjectsByDateTracker(object):
             ).values('ts_date').annotate(
                 ts_n=models.Count('pk')
             ).order_by('ts_date')
+
+            logger.info("trackers - week - {}".format(vals.query))
 
             for val in vals:
                 self.statistic_model.objects.record(

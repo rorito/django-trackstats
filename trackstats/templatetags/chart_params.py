@@ -5,19 +5,25 @@ from trackstats.models import Metric
 register = template.Library()
 
 DATE_FORMAT = '%Y-%m-%d'
-
+DAY = 86400  # seconds
 
 @register.simple_tag(takes_context=True)
 def url_redirect_params(context):
     request = context.get('request', {})
     GET = getattr(request, 'GET', {})
     try:
-        metric = int(GET.get('metric__id__exact'))
+        # Try to get a metric querystring param, if there isn't one, default to the first Metric
+        metric = int(GET.get('metric__id__exact', Metric.objects.first().pk))
         if Metric.objects.filter(pk=metric).count() == 0:
-            raise ValueError("Not metric")
+            raise ValueError("There are no Metrics defined.")
     except (ValueError, AssertionError, TypeError):
         # If there's no metic selected, there's no need to look for the dates
         return ''
+
+    # Try to get the period from the querystring param, default to DAY period
+    period = GET.get('period', None) or GET.get('period__exact', None)
+    if not period:
+        period = DAY
 
     from_date, to_date = None, None
     query = ''
@@ -40,10 +46,17 @@ def url_redirect_params(context):
                     to_date = datetime(year, month + 1, 1)
                 to_date -= timedelta(days=1)
 
+            # Convert date object to string for the querystring params
+            from_date = str(from_date)
+            to_date = str(to_date)
+
         else:
-            from_date = datetime.strptime(GET.get('date__gte'), DATE_FORMAT)
-            to_date = datetime.strptime(GET.get('date__lt'), DATE_FORMAT)
-    except (ValueError, TypeError):
+            todays_date = datetime.now().date()
+            from_date = GET.get('date__gte', str(todays_date - timedelta(days=7)))
+            to_date = GET.get('date__lt', str(todays_date))
+
+    except (ValueError, TypeError) as e:
+        print e
         # Some date range must have been wrong
         pass
 
@@ -52,10 +65,12 @@ def url_redirect_params(context):
             '?from_date={from_date}'
             '&to_date={to_date}'
             '&metric={metric}'
+            '&period={period}'
         ).format(
             metric=metric,
-            from_date=from_date.strftime(DATE_FORMAT),
-            to_date=to_date.strftime(DATE_FORMAT)
+            from_date=from_date,
+            to_date=to_date,
+            period=period
         )
 
     return query

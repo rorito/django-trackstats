@@ -42,14 +42,25 @@
     {% endfor %}
   ];
 
+  var hAxisGridlines = graphData.length;
+  if (hAxisGridlines < 1) hAxisGridlines = 7;
+
+  var horizontalAxis = {
+    format: 'yyyy-M-d',
+    gridlines: {count: hAxisGridlines}
+  };
+
+  // Get the min and max Date values for the x-axis
+  if (graphData.length > 0) {
+    horizontalAxis["minValue"] = new Date(Date.parse(graphData[0][0]));
+    horizontalAxis["maxValue"] = new Date(Date.parse(graphData[graphData.length-1][0]));
+  }
+
   var graphOptions = {
     title: '{{ form.cleaned_data.metric.name }}',
     width: "100%",
     height: 500,
-    hAxis: {
-      format: 'yyyy-M-d',
-      gridlines: {count: 15}
-    },
+    hAxis: horizontalAxis,
     vAxis: {
       gridlines: {color: 'none'},
       minValue: 0
