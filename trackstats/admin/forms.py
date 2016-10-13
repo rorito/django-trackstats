@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from trackstats.models import (
     Metric,
+    Period,
     StatisticByDate,
     StatisticByDateAndObject)
 
@@ -13,12 +14,14 @@ class GraphByDateForm(forms.Form):
     statistic_model = StatisticByDate
 
     metric = forms.ModelChoiceField(queryset=None)
+    period = forms.ModelChoiceField(queryset=None)
     from_date = forms.DateField(initial=date.today() - timedelta(days=7))
     to_date = forms.DateField(initial=date.today())
 
     def __init__(self, *args, **kwargs):
         super(GraphByDateForm, self).__init__(*args, **kwargs)
         self.fields['metric'].queryset = Metric.objects.all()
+        self.fields['period'].queryset = Period.objects.all()
 
     def get_statistics(self):
         assert self.is_valid()
