@@ -76,7 +76,7 @@ class ObjectsByDateTracker(object):
             while upto_date <= to_date:
                 self.track_lifetime_upto(qs, upto_date)
                 upto_date += timedelta(days=1)
-                logger.info("trackers - lifetime - {}".format(qs))
+                logger.info("trackers - {} - Date: {} - LIFETIME - {}".format(self.metric, upto_date, qs.values_list('pk', flat=True)))
         elif self.period == Period.DAY:
             values_fields = ['ts_date'] + self.get_track_values()
             connection = connections[qs.db]
@@ -102,11 +102,14 @@ class ObjectsByDateTracker(object):
             else:
                 vals = qs.extra(select={"ts_date": self.date_field})
                 start_dt = start_date
+
+            logger.info("trackers - {} - Date: {} - DAY - Query: {}".format(self.metric, start_date, vals.query))
+            logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, start_date, vals.filter(**{self.date_field + '__gte': start_dt}).values_list('pk', flat=True)))
+
             vals = vals.filter(
                 **{self.date_field + '__gte': start_dt}).values(
                 *values_fields).order_by().annotate(ts_n=self.aggr_op)
             # TODO: Bulk create
-            logger.info("trackers - day - {}".format(vals.query))
             for val in vals:
                 self.statistic_model.objects.record(
                     metric=self.metric,
@@ -116,7 +119,6 @@ class ObjectsByDateTracker(object):
                     **self.get_record_kwargs(val))
 
         elif self.period == Period.MONTH:
-
             connection = connections[qs.db]
             truncate_date = connection.ops.date_trunc_sql('month', self.date_field)
 
@@ -126,7 +128,8 @@ class ObjectsByDateTracker(object):
                 ts_n=models.Count('pk')
             ).order_by('ts_date')
 
-            logger.info("trackers - month - {}".format(vals.query))
+            logger.info("trackers - {} - Date: {} - MONTH - Query: {}".format(self.metric, start_date, vals.query))
+            logger.info("trackers - {} - Date: {} - MONTH - PKs: {}".format(self.metric, start_date, vals.values_list('pk', flat=True)))
 
             for val in vals:
                 self.statistic_model.objects.record(
@@ -157,7 +160,8 @@ class ObjectsByDateTracker(object):
                 ts_n=models.Count('pk')
             ).order_by('ts_date')
 
-            logger.info("trackers - week - {}".format(vals.query))
+            logger.info("trackers - {} - Date: {} - WEEK - Query: {}".format(self.metric, start_date, vals.query))
+            logger.info("trackers - {} - Date: {} - WEEK - PKs: {}".format(self.metric, start_date, vals.values_list('pk', flat=True)))
 
             for val in vals:
                 self.statistic_model.objects.record(
