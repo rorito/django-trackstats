@@ -54,8 +54,10 @@ class ObjectsByDateTracker(object):
         qs_filter_dates = qs.filter(**filter_kwargs)
         n = qs_filter_dates.count()
 
-        logger.info("trackers - {} - Date: {} - LIFETIME - {}".format(self.metric, upto_date, list(
-            qs_filter_dates.values_list('pk', flat=True))))
+        # LIFETIME logs really junk up the console logs, so we're going to leave this off for now,
+        # just here for sanity checking
+        # logger.info("trackers - {} - Date: {} - LIFETIME - {}".format(self.metric, upto_date, list(
+        #     qs_filter_dates.values_list('pk', flat=True))))
 
         self.statistic_model.objects.record(
             metric=self.metric,
@@ -119,7 +121,7 @@ class ObjectsByDateTracker(object):
                     "{}__date".format(self.date_field): val['ts_date']
                 }
 
-                logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, val['ts_date'], list(
+                logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
                     qs.filter(**query_date_field).values_list('pk', flat=True))))
 
                 self.statistic_model.objects.record(
@@ -146,7 +148,7 @@ class ObjectsByDateTracker(object):
                     "{}__date".format(self.date_field): val['ts_date']
                 }
 
-                logger.info("trackers - {} - Date: {} - MONTH - PKs: {}".format(self.metric, val['ts_date'], list(
+                logger.info("trackers - {} - Date: {} - MONTH - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
                     qs.filter(**query_date_field).values_list('pk', flat=True))))
 
                 self.statistic_model.objects.record(
@@ -184,7 +186,7 @@ class ObjectsByDateTracker(object):
                     "{}__date".format(self.date_field): val['ts_date']
                 }
 
-                logger.info("trackers - {} - Date: {} - WEEK - PKs: {}".format(self.metric, val['ts_date'], list(
+                logger.info("trackers - {} - Date: {} - WEEK - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
                     qs.filter(**query_date_field).values_list('pk', flat=True))))
 
                 self.statistic_model.objects.record(
