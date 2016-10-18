@@ -103,12 +103,13 @@ class ObjectsByDateTracker(object):
                 vals = qs.extra(select={"ts_date": self.date_field})
                 start_dt = start_date
 
-            logger.info("trackers - {} - Date: {} - DAY - Query: {}".format(self.metric, start_date, vals.query))
-            logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, start_date, list(vals.filter(**{self.date_field + '__gte': start_dt}).values_list('pk', flat=True))))
-
             vals = vals.filter(
                 **{self.date_field + '__gte': start_dt}).values(
                 *values_fields).order_by().annotate(ts_n=self.aggr_op)
+            
+            logger.info("trackers - {} - Date: {} - DAY - Query: {}".format(self.metric, start_date, vals.query))
+            logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, start_date, list(vals.values_list('pk', flat=True))))
+
             # TODO: Bulk create
             for val in vals:
                 self.statistic_model.objects.record(
