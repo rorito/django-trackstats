@@ -51,7 +51,12 @@ class ObjectsByDateTracker(object):
         filter_kwargs = {
             self.date_field + '__date__lte': upto_date
         }
-        n = qs.filter(**filter_kwargs).count()
+        qs_filter_dates = qs.filter(**filter_kwargs)
+        n = qs_filter_dates.count()
+
+        logger.info("trackers - {} - Date: {} - LIFETIME - {}".format(self.metric, upto_date, list(
+            qs_filter_dates.values_list('pk', flat=True))))
+
         self.statistic_model.objects.record(
             metric=self.metric,
             value=n,
@@ -76,7 +81,7 @@ class ObjectsByDateTracker(object):
             while upto_date <= to_date:
                 self.track_lifetime_upto(qs, upto_date)
                 upto_date += timedelta(days=1)
-                logger.info("trackers - {} - Date: {} - LIFETIME - {}".format(self.metric, upto_date, list(qs.values_list('pk', flat=True))))
+
         elif self.period == Period.DAY:
             values_fields = ['ts_date'] + self.get_track_values()
             connection = connections[qs.db]
@@ -103,15 +108,20 @@ class ObjectsByDateTracker(object):
                 vals = qs.extra(select={"ts_date": self.date_field})
                 start_dt = start_date
 
-            vals = vals.filter(
-                **{self.date_field + '__gte': start_dt}).values(
-                *values_fields).order_by().annotate(ts_n=self.aggr_op)
-            
-            logger.info("trackers - {} - Date: {} - DAY - Query: {}".format(self.metric, start_date, vals.query))
-            logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, start_date, list(vals.values_list('pk', flat=True))))
+            vals = vals.filter(**{self.date_field + '__gte': start_dt}).values(*values_fields).order_by().annotate(
+                ts_n=self.aggr_op)
 
             # TODO: Bulk create
             for val in vals:
+                # hacky - we put the metric's date_field into a dictionary as a key, with the value being the current
+                # date we need to do this so we can log the PKs below for sanity checking values
+                query_date_field = {
+                    "{}__date".format(self.date_field): val['ts_date']
+                }
+
+                logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, val['ts_date'], list(
+                    qs.filter(**query_date_field).values_list('pk', flat=True))))
+
                 self.statistic_model.objects.record(
                     metric=self.metric,
                     value=val['ts_n'],
@@ -129,10 +139,16 @@ class ObjectsByDateTracker(object):
                 ts_n=models.Count('pk')
             ).order_by('ts_date')
 
-            logger.info("trackers - {} - Date: {} - MONTH - Query: {}".format(self.metric, start_date, vals.query))
-            logger.info("trackers - {} - Date: {} - MONTH - PKs: {}".format(self.metric, start_date, list(vals.values_list('pk', flat=True))))
-
             for val in vals:
+                # hacky - we put the metric's date_field into a dictionary as a key, with the value being the current
+                # date we need to do this so we can log the PKs below for sanity checking values
+                query_date_field = {
+                    "{}__date".format(self.date_field): val['ts_date']
+                }
+
+                logger.info("trackers - {} - Date: {} - MONTH - PKs: {}".format(self.metric, val['ts_date'], list(
+                    qs.filter(**query_date_field).values_list('pk', flat=True))))
+
                 self.statistic_model.objects.record(
                     metric=self.metric,
                     value=val['ts_n'],
@@ -161,10 +177,16 @@ class ObjectsByDateTracker(object):
                 ts_n=models.Count('pk')
             ).order_by('ts_date')
 
-            logger.info("trackers - {} - Date: {} - WEEK - Query: {}".format(self.metric, start_date, vals.query))
-            logger.info("trackers - {} - Date: {} - WEEK - PKs: {}".format(self.metric, start_date, list(vals.values_list('pk', flat=True))))
-
             for val in vals:
+                # hacky - we put the metric's date_field into a dictionary as a key, with the value being the current
+                # date we need to do this so we can log the PKs below for sanity checking values
+                query_date_field = {
+                    "{}__date".format(self.date_field): val['ts_date']
+                }
+
+                logger.info("trackers - {} - Date: {} - WEEK - PKs: {}".format(self.metric, val['ts_date'], list(
+                    qs.filter(**query_date_field).values_list('pk', flat=True))))
+
                 self.statistic_model.objects.record(
                     metric=self.metric,
                     value=val['ts_n'],
