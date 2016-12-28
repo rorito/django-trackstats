@@ -121,8 +121,8 @@ class ObjectsByDateTracker(object):
                     "{}__date".format(self.date_field): val['ts_date']
                 }
 
-                logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
-                    qs.filter(**query_date_field).values_list('pk', flat=True))))
+                #logger.info("trackers - {} - Date: {} - DAY - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
+                #    qs.filter(**query_date_field).values_list('pk', flat=True))))
 
                 self.statistic_model.objects.record(
                     metric=self.metric,
@@ -148,8 +148,8 @@ class ObjectsByDateTracker(object):
                     "{}__date".format(self.date_field): val['ts_date']
                 }
 
-                logger.info("trackers - {} - Date: {} - MONTH - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
-                    qs.filter(**query_date_field).values_list('pk', flat=True))))
+                #logger.info("trackers - {} - Date: {} - MONTH - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
+                #    qs.filter(**query_date_field).values_list('pk', flat=True))))
 
                 self.statistic_model.objects.record(
                     metric=self.metric,
@@ -186,8 +186,8 @@ class ObjectsByDateTracker(object):
                     "{}__date".format(self.date_field): val['ts_date']
                 }
 
-                logger.info("trackers - {} - Date: {} - WEEK - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
-                    qs.filter(**query_date_field).values_list('pk', flat=True))))
+                #logger.info("trackers - {} - Date: {} - WEEK - PKs: {}".format(self.metric, val['ts_date'].strftime("%y-%m-%d"), list(
+                #    qs.filter(**query_date_field).values_list('pk', flat=True))))
 
                 self.statistic_model.objects.record(
                     metric=self.metric,
